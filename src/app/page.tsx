@@ -29,9 +29,9 @@ const LandingPage = async () => {
                     <Button>
                         <Link href="/mail">Get Started</Link>
                     </Button>
-                    <Link href='https://start-saas.com?utm=normalhuman'>
+                    {/* <Link href='https://start-saas.com?utm=normalhuman'>
                         <Button variant="outline" >Learn More</Button>
-                    </Link>
+                    </Link> */}
                 </div>
                 <div className="mt-12 max-w-5xl mx-auto">
                     <h2 className="text-2xl font-semibold mb-4 text-center">Experience the power of:</h2>
