@@ -14,6 +14,7 @@ export const GET = async (req: NextRequest) => {
     if (status !== 'success') return NextResponse.json({ error: "Account connection failed" }, { status: 400 });
 
     const code = params.get('code');
+    console.log('code of fetch url ', code);
     const token = await getAurinkoToken(code as string)
     console.log('token', token);
     if (!token) return NextResponse.json({ error: "Failed to fetch token" }, { status: 400 });
@@ -33,6 +34,7 @@ export const GET = async (req: NextRequest) => {
         }
     })
     console.log('waitUntil', token.accountId, userId);
+    
     waitUntil(
 
         axios.post(`${process.env.NEXT_PUBLIC_URL}/api/initial-sync`, { accountId: token.accountId.toString(), userId }).then((res) => {

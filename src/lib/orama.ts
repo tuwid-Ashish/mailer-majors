@@ -48,14 +48,16 @@ export class OramaManager {
         const embeddings = await getEmbeddings(prompt)
         console.log("the what error by embedding:" , embeddings);
         const results = await search(this.orama, {
-            // mode: 'fu',
+            mode: 'fulltext',
             term: prompt,
-            vector: {
-                value: embeddings,
-                property: 'embeddings'
-            },
-            similarity: 0.70,
-            limit: numResults,
+            properties: ['title', 'from', 'to', 'body'],
+            limit: 5  // Limit to most relevant 5 emails
+            // vector: {
+            //     value: embeddings,
+            //     property: 'embeddings'
+            // },
+            // similarity: 0.70,
+            // limit: numResults,
             // hybridWeights: {
             //     text: 0.8,
             //     vector: 0.2,

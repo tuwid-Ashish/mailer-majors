@@ -71,7 +71,7 @@ export const getAurinkoToken = async (code: string) => {
         }
     } catch (error) {
         if (axios.isAxiosError(error)) {
-            console.error('Error fetching Aurinko token:', error.response?.data);
+            console.error('Error fetching Aurinko token:', error.response?.data,error);
         } else {
             console.error('Unexpected error fetching Aurinko token:', error);
         }

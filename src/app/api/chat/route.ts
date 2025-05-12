@@ -153,36 +153,65 @@ export async function POST(req: Request) {
         const lastMessage = messages[messages.length - 1];
         const context = await oramaManager.vectorSearch({ prompt: lastMessage.content });
         console.log(context.hits.length + " hits found");
+        
+        // Format email context in a more readable way
+        const emailContextString = context.hits
+            .map(hit => {
+                const doc = hit.document;
+                return `
+Email: 
+- Subject: ${doc.title}
+- From: ${doc.from}
+- To: ${doc.to}
+- Date: ${new Date(doc.sentAt).toLocaleString()}
+- Preview: ${doc.body?.substring(0, 100)}...
+                `;
+            })
+            .join('\n');
+//         // Build a full prompt by combining a system prompt and user messages
+//         const systemPrompt = `
+// You are an AI email assistant embedded in an email client app. Your purpose is to help the user compose emails by answering questions, providing suggestions, and offering relevant information based on the context of their previous emails.
+// THE TIME NOW IS ${new Date().toLocaleString()}
 
-        // Build a full prompt by combining a system prompt and user messages
-        const systemPrompt = `
-You are an AI email assistant embedded in an email client app. Your purpose is to help the user compose emails by answering questions, providing suggestions, and offering relevant information based on the context of their previous emails.
-THE TIME NOW IS ${new Date().toLocaleString()}
+// START CONTEXT BLOCK
+// ${context.hits.map((hit) => JSON.stringify(hit.document)).join("\n")}
+// END OF CONTEXT BLOCK
 
-START CONTEXT BLOCK
-${context.hits.map((hit) => JSON.stringify(hit.document)).join("\n")}
-END OF CONTEXT BLOCK
+// When responding, please keep in mind:
+// - Be helpful, clever, and articulate.
+// - Rely on the provided email context to inform your responses.
+// - If the context does not contain enough information to answer a question, politely say you don't have enough information.
+// - Avoid apologizing for previous responses. Instead, indicate that you have updated your knowledge based on new information.
+// - Do not invent or speculate about anything that is not directly supported by the email context.
+// - Keep your responses concise and relevant to the user's questions or the email being composed.
+//         `;
+        const prompt = `
+You are an AI email assistant. Use this email context to help answer the user's question:
 
-When responding, please keep in mind:
-- Be helpful, clever, and articulate.
-- Rely on the provided email context to inform your responses.
-- If the context does not contain enough information to answer a question, politely say you don't have enough information.
-- Avoid apologizing for previous responses. Instead, indicate that you have updated your knowledge based on new information.
-- Do not invent or speculate about anything that is not directly supported by the email context.
-- Keep your responses concise and relevant to the user's questions or the email being composed.
-        `;
+CONTEXT:
+${emailContextString}
+
+USER QUESTION:
+${lastMessage.content}
+
+Remember to:
+- Be concise and specific
+- Only use information from the provided email context
+- If you don't have enough context, say so
+`;
         const userPrompts = messages
             .filter((message: { role: string; content: string }) => message.role === "user")
             .map((message: { content: string }) => message.content)
             .join("\n");
 
-        const fullPrompt = systemPrompt + "\n" + userPrompts;
+        // const fullPrompt = systemPrompt + "\n" + userPrompts;
 
         const stream = createStreamableValue("");
-        const { textStream } = await streamText({
+        const { textStream } =  streamText({
             model: gemini("gemini-1.5-flash"),
-            prompt: fullPrompt,
+            prompt: prompt,
         });
+        
         for await (const delta of textStream) {
             stream.update(delta);
         }

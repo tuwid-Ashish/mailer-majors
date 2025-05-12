@@ -1,6 +1,13 @@
 "use client"
 
 import * as React from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 import { cn } from "@/lib/utils"
 import {
@@ -10,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { api, type RouterOutputs } from "@/trpc/react"
+import { api } from "@/trpc/react"
 import { useLocalStorage } from "usehooks-ts"
 import { Plus } from "lucide-react"
 import { getAurinkoAuthorizationUrl } from "@/lib/aurinko"
@@ -25,6 +32,18 @@ export function AccountSwitcher({
 }: AccountSwitcherProps) {
   const { data: accounts } = api.mail.getAccounts.useQuery()
   const [accountId, setAccountId] = useLocalStorage('accountId', '')
+  const [isOpen, setIsOpen] = React.useState(false)
+
+   const handleProviderSelect = async (provider: 'Google' | 'Office365') => {
+    try {
+      const url = await getAurinkoAuthorizationUrl(provider)
+      window.location.href = url
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
+    setIsOpen(false)
+  }
+
 
   React.useEffect(() => {
     if (accounts && accounts.length > 0) {
@@ -51,6 +70,7 @@ export function AccountSwitcher({
 
   if (!accounts) return <></>
   return (
+    <>
     <div className="items-center gap-2 flex w-full">
       <Select defaultValue={accountId} onValueChange={setAccountId}>
         <SelectTrigger
@@ -84,19 +104,39 @@ export function AccountSwitcher({
               </div>
             </SelectItem>
           ))}
-          <div onClick={async (e) => {
-            try {
-              const url = await getAurinkoAuthorizationUrl('Google')
-              window.location.href = url
-            } catch (error) {
-              toast.error((error as Error).message)
-            }
-          }} className="relative flex hover:bg-gray-50 w-full cursor-pointer items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+          <div 
+          onClick={() => setIsOpen(true)}
+        className="relative flex hover:bg-gray-50 w-full cursor-pointer items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
             <Plus className="size-4 mr-1" />
             Add account
           </div>
         </SelectContent>
       </Select>
     </div>
+
+  <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Choose Email Provider</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleProviderSelect('Google')}
+            >
+              Google
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleProviderSelect('Office365')}
+            >
+              Outlook
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>  
   )
 }

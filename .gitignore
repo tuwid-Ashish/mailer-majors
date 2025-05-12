@@ -6,7 +6,7 @@ emails.json
 /node_modules
 /.pnp
 .pnp.js
-
+/test.json
 # testing
 /coverage
 
